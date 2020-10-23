@@ -1,0 +1,55 @@
+---
+title: "COVID19 by Continents"
+author: "David Jackson"
+date: "10/23/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(scales)
+library(RSQLite)
+```
+```{r,echo=FALSE}
+rm(list=ls())
+source("../DATA/movavg.R")
+db <- db <- dbConnect(RSQLite::SQLite(),dbname= "../COVIDDB/COVID.sqlite3")
+df <- dbGetQuery(db,"select * from ECDC")
+df$Reported <- as.Date(df$Reported)
+df <- df[order(df$Reported),]
+```
+
+#### Total Cases and Deaths
+
+```{r}
+total_cases <- aggregate(Cases~Continent,df,FUN=sum)
+total_deaths <- aggregate(Deaths~Continent,df,FUN=sum)
+## Daily totals by Continents
+continent_cases <- aggregate(Cases~Continent+Reported,df,FUN=sum)
+continent_deaths <- aggregate(Deaths~Continent+Reported,df,FUN=sum)
+
+```
+```{r}
+ggplot(total_cases,aes(x=reorder(Continent,Cases),y=Cases)) + geom_col() +
+  labs(title="Total Number of Cases by Continent") +
+  scale_y_continuous(labels = scales::comma)
+
+ggplot(total_deaths,aes(x=reorder(Continent,Deaths),y=Deaths)) + geom_col() +
+  labs(title="Total Number of Deaths by Continent") +
+scale_y_continuous(labels = scales::comma)
+
+```
+
+#### PLot of Continents Cases and Deaths by Date
+
+```{r}
+ggplot(continent_cases) +
+  geom_line(aes(x=Reported,y=Cases,col=Continent)) +
+  labs("Total Cases by Continent and Day.")
+
+ggplot(continent_deaths) +
+  geom_line(aes(x=Reported,y=Deaths,col=Continent)) +
+  labs("Total Deaths by Continent and Day.")
+```
+
