@@ -23,7 +23,7 @@ df$Reported <- as.Date(df$Reported)
 df <- df[order(df$Reported),]
 ```
 
-#### Total Cases and Deaths
+### Total Cases and Deaths
 
 ```{r}
 total_cases <- aggregate(Cases~Continent,df,FUN=sum)
