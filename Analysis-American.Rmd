@@ -1,0 +1,81 @@
+---
+title: "American Continent COVID19"
+author: "David Jackson"
+date: "10/24/2020"
+output: 
+  html_document: 
+    fig_width: 9
+    fig_height: 7
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(RSQLite)
+```
+
+## American Continent COVID19 Cases and Deaths
+
+```{r,echo=FALSE}
+rm(list=ls())
+source("../DATA/movavg.R")
+db <- db <- dbConnect(RSQLite::SQLite(),dbname= "../COVIDDB/COVID.sqlite3")
+df <- dbGetQuery(db,"select * from ECDC where Continent ='America'")
+df$Reported <- as.Date(df$Reported)
+df <- df[order(df$Reported),]
+```
+
+### Count Number where Cases or Deaths >=1
+
+```{r}
+count_days <- df %>% filter(Cases >=1) %>%
+  group_by(Countries) %>% summarise(Days = n())
+
+ggplot(count_days) +geom_col(aes(x=Countries,y=Days)) + coord_flip() +
+  labs(title="Countries: Count of Days with cases")
+
+count_days1 <- df %>% filter(Deaths >=1) %>%
+  group_by(Countries) %>% summarise(Days = n())
+
+ggplot(count_days1) +geom_col(aes(x=Countries,y=Days)) + coord_flip() +
+  labs(title="Countries: Count of Days with Deaths")
+
+```
+
+#### Plot of Total Cases and Deaths for American Cont.
+
+```{r}
+cont_total <- df %>% select(Countries,Cases,Deaths) %>%
+  group_by(Countries) %>% summarise(
+    across(Cases:Deaths,sum)
+  ) %>% filter(Cases >=1 | Deaths >=1)
+
+ggplot(cont_total) + geom_col(aes(x=Cases,y=Countries)) +
+  labs(title="Total Cases by Countries") +
+  scale_x_continuous(labels = scales::comma)
+
+
+ggplot(cont_total) + geom_col(aes(x=Deaths,y=Countries)) +
+  labs(title="Total Deaths by Countries") +
+  scale_x_continuous(labels = scales::comma)
+```
+
+#### Total Cases and Deaths all Americas.
+
+```{r}
+totals_day <- df %>% filter(Cases >=1) %>%
+group_by(Reported) %>% summarise(
+    across(Cases:Deaths,sum)
+  ) 
+ ggplot(totals_day) + geom_line(aes(x=Reported,y=Cases)) +
+   geom_smooth(aes(x=Reported,y=Cases,span=0.25)) +
+   labs(title = "America's Total Cases by Day") +
+   scale_y_continuous(labels = scales::comma)
+
+ggplot(totals_day) + geom_line(aes(x=Reported,y=Deaths)) +
+   geom_smooth(aes(x=Reported,y=Deaths,span=0.25)) +
+   labs(title = "America's Total Deaths by Day") +
+  scale_y_continuous(labels = scales::comma)
+```
