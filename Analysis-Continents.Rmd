@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = FALSE,message = FALSE,error = FALSE)
 library(ggplot2)
 library(scales)
 library(RSQLite)
+library(dplyr)
 ```
 ```{r,echo=FALSE}
 rm(list=ls())
@@ -22,6 +23,24 @@ df <- dbGetQuery(db,"select * from ECDC")
 df$Reported <- as.Date(df$Reported)
 df <- df[order(df$Reported),]
 ```
+
+### Count of Countries by Continent
+
+```{r}
+count_cont <- distinct(df, Countries, Continent) %>% count(Continent)
+ggplot(count_cont) + geom_col(aes(x=reorder(Continent,n),y=n)) +
+  labs(title="Count of Countries by Continent",x="Continent",y="Country Count")
+  
+```
+
+### Population by Continent
+```{r}
+population_cont <- df %>% group_by(Continent) %>% 
+  summarise(Pop = sum(Population))
+ggplot(population_cont) + geom_col(aes(x=reorder(Continent,Pop),y=Pop)) +
+  scale_y_continuous(labels=scales::comma) + coord_flip()
+```
+
 
 ### Total Cases and Deaths
 
@@ -48,6 +67,7 @@ us_deaths <- aggregate(Deaths~Reported,df,FUN=sum)
 # compare_cases$rate <- compare_cases$USCases/compare_cases$uscases
 
 ```
+
 ```{r}
 ggplot(total_cases,aes(x=reorder(Continent,Cases),y=Cases)) + geom_col() +
   labs(title="Total Number of Cases by Continent") +
@@ -88,9 +108,11 @@ ggplot(continent_deaths) +
 ggplot(continent_cases) +
   geom_smooth(aes(x=Reported,y=Cases,col=Continent),span=0.1) +
   labs(title="Loess Fitted Curve(Cases) by  Continent and Day.")
+  
 
 ggplot(continent_deaths) +
   geom_smooth(aes(x=Reported,y=Deaths,col=Continent),span=0.1) +
-  labs(title="Loess Fitted Curve(Deaths) by  Continent and Day.")
+  labs(title="Loess Fitted Curve(Deaths) by  Continent and Day.") 
+  
 ```
 
