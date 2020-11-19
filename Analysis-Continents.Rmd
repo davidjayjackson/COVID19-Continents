@@ -1,7 +1,7 @@
 ---
 title: "COVID19 by Continents"
 author: "David Jackson"
-date: "10/23/2020"
+date: "11/19/2020"
 output: 
   html_document: 
     fig_width: 9
@@ -14,6 +14,7 @@ library(ggplot2)
 library(scales)
 library(RSQLite)
 library(dplyr)
+theme_set(theme_linedraw() + theme(panel.grid = element_line(linetype = 'dashed')))
 ```
 ```{r,echo=FALSE}
 rm(list=ls())
@@ -91,15 +92,15 @@ ggplot(continent_deaths) +
   labs("Total Deaths by Continent and Day.")
 ```
 ```{r}
-ggplot(continent_cases) +
-  geom_line(aes(x=Reported,y=Cases,col=Continent)) +
-  labs(title="Total Cases by  Day.") + 
-  facet_wrap(~Continent,ncol=1)
-
-ggplot(continent_deaths) +
-  geom_line(aes(x=Reported,y=Deaths,col=Continent)) +
-  labs(title="Total Deaths by Continent and Day.") +
-  facet_wrap(~Continent,ncol=1)
+# ggplot(continent_cases) +
+#   geom_line(aes(x=Reported,y=Cases,col=Continent)) +
+#   labs(title="Total Cases by  Day.") + 
+#   facet_wrap(~Continent,ncol=1)
+# 
+# ggplot(continent_deaths) +
+#   geom_line(aes(x=Reported,y=Deaths,col=Continent)) +
+#   labs(title="Total Deaths by Continent and Day.") +
+#   facet_wrap(~Continent,ncol=1)
 ```
 
 #### Plot of Loess Fitted curve by Continent
