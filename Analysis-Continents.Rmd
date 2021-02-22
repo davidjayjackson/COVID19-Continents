@@ -1,7 +1,7 @@
 ---
-title: "COVID19 by Continents"
+title: "COVID19 by continents"
 author: "David Jackson"
-date: "11/19/2020"
+date: "2021/02/22 2:40 PM/EST"
 output: 
   html_document: 
     fig_width: 9
@@ -19,101 +19,101 @@ theme_set(theme_linedraw() + theme(panel.grid = element_line(linetype = 'dashed'
 ```{r,echo=FALSE}
 rm(list=ls())
 source("../DATA/movavg.R")
-db <- db <- dbConnect(RSQLite::SQLite(),dbname= "../COVIDDB/COVID.sqlite3")
-df <- dbGetQuery(db,"select * from ECDC")
-df$Reported <- as.Date(df$Reported)
-df <- df[order(df$Reported),]
+db <- db <- dbConnect(RSQLite::SQLite(),dbname= "../COVID-19-DB/OURWORLD.sqlite3")
+df <- dbGetQuery(db,"select * from OWID")
+df$date <- as.Date(df$date)
+df <- df[order(df$date),]
 ```
 
-### Count of Countries by Continent
+### Count of location by continent
 
 ```{r}
-count_cont <- distinct(df, Countries, Continent) %>% count(Continent)
-ggplot(count_cont) + geom_col(aes(x=reorder(Continent,n),y=n)) +
-  labs(title="Count of Countries by Continent",x="Continent",y="Country Count")
+count_cont <- distinct(df, location, continent) %>% count(continent)
+ggplot(count_cont) + geom_col(aes(x=reorder(continent,n),y=n)) +
+  labs(title="Count of location by continent",x="continent",y="Country Count")
   
 ```
 
-### Population by Continent
+### population by continent
 ```{r}
-population_cont <- df %>% group_by(Continent) %>% 
-  summarise(Pop = sum(Population))
-ggplot(population_cont) + geom_col(aes(x=reorder(Continent,Pop),y=Pop)) +
+population_cont <- df %>% group_by(continent) %>% 
+  summarise(Pop = sum(population))
+ggplot(population_cont) + geom_col(aes(x=reorder(continent,Pop),y=Pop)) +
   scale_y_continuous(labels=scales::comma) + coord_flip()
 ```
 
 
-### Total Cases and Deaths
+### Total new_cases and new_deaths
 
 ```{r}
-total_cases <- aggregate(Cases~Continent,df,FUN=sum)
-total_deaths <- aggregate(Deaths~Continent,df,FUN=sum)
-## Daily totals by Continents
-geoID_cases <- aggregate(Cases~Continent+geoID+Reported,df,FUN=sum)
-geoID_deaths <- aggregate(Deaths~Continent+geoID+Reported,df,FUN=sum)
+total_new_cases <- aggregate(new_cases~continent,df,FUN=sum)
+total_new_deaths <- aggregate(new_deaths~continent,df,FUN=sum)
+## Daily totals by continents
+geoID_new_cases <- aggregate(new_cases~continent+iso_code+date,df,FUN=sum)
+geoID_new_deaths <- aggregate(new_deaths~continent+iso_code+date,df,FUN=sum)
 ##
-continent_cases <- aggregate(Cases~Continent+Reported,df,FUN=sum)
-continent_deaths <- aggregate(Deaths~Continent+Reported,df,FUN=sum)
+continent_new_cases <- aggregate(new_cases~continent+date,df,FUN=sum)
+continent_new_deaths <- aggregate(new_deaths~continent+date,df,FUN=sum)
 
 ## US and Americas
-america_cases <- subset(continent_cases,Continent =="America")
-america_deaths <- subset(continent_deaths,Continent =="America")
+america_new_cases <- subset(continent_new_cases,continent =="America")
+america_new_deaths <- subset(continent_new_deaths,continent =="America")
 ```
 ```{r}
-US <- subset(df,geoID =="US")
-us_cases <- aggregate(Cases~Reported,US,FUN=sum)
-us_deaths <- aggregate(Deaths~Reported,df,FUN=sum)
-# compare_cases <-cbind(america_cases,us_cases)
-# colnames(compare_cases) <- c("Continent","Date1","AMCases","Date2","USCases")
-# compare_cases$rate <- compare_cases$USCases/compare_cases$uscases
+US <- subset(df,iso_code =="USA")
+us_new_cases <- aggregate(new_cases~date,US,FUN=sum)
+us_new_deaths <- aggregate(new_deaths~date,df,FUN=sum)
+# compare_new_cases <-cbind(america_new_cases,us_new_cases)
+# colnames(compare_new_cases) <- c("continent","date1","AMnew_cases","date2","USnew_cases")
+# compare_new_cases$rate <- compare_new_cases$USnew_cases/compare_new_cases$usnew_cases
 
 ```
 
 ```{r}
-ggplot(total_cases,aes(x=reorder(Continent,Cases),y=Cases)) + geom_col() +
-  labs(title="Total Number of Cases by Continent") +
+ggplot(total_new_cases,aes(x=reorder(continent,new_cases),y=new_cases)) + geom_col() +
+  labs(title="Total Number of new_cases by continent") +
   scale_y_continuous(labels = scales::comma)
 
-ggplot(total_deaths,aes(x=reorder(Continent,Deaths),y=Deaths)) + geom_col() +
-  labs(title="Total Number of Deaths by Continent") +
+ggplot(total_new_deaths,aes(x=reorder(continent,new_deaths),y=new_deaths)) + geom_col() +
+  labs(title="Total Number of new_deaths by continent") +
 scale_y_continuous(labels = scales::comma)
 
 ```
 
-#### PLot of Continents Cases and Deaths by Date
+#### PLot of continents new_cases and new_deaths by date
 
 ```{r}
-ggplot(continent_cases) +
-  geom_line(aes(x=Reported,y=Cases,col=Continent)) +
-  labs("Total Cases by Continent and Day.")
+ggplot(continent_new_cases) +
+  geom_line(aes(x=date,y=new_cases,col=continent)) +
+  labs("Total new_cases by continent and Day.")
 
-ggplot(continent_deaths) +
-  geom_line(aes(x=Reported,y=Deaths,col=Continent)) +
-  labs("Total Deaths by Continent and Day.")
+ggplot(continent_new_deaths) +
+  geom_line(aes(x=date,y=new_deaths,col=continent)) +
+  labs("Total new_deaths by continent and Day.")
 ```
 ```{r}
-# ggplot(continent_cases) +
-#   geom_line(aes(x=Reported,y=Cases,col=Continent)) +
-#   labs(title="Total Cases by  Day.") + 
-#   facet_wrap(~Continent,ncol=1)
+# ggplot(continent_new_cases) +
+#   geom_line(aes(x=date,y=new_cases,col=continent)) +
+#   labs(title="Total new_cases by  Day.") + 
+#   facet_wrap(~continent,ncol=1)
 # 
-# ggplot(continent_deaths) +
-#   geom_line(aes(x=Reported,y=Deaths,col=Continent)) +
-#   labs(title="Total Deaths by Continent and Day.") +
-#   facet_wrap(~Continent,ncol=1)
+# ggplot(continent_new_deaths) +
+#   geom_line(aes(x=date,y=new_deaths,col=continent)) +
+#   labs(title="Total new_deaths by continent and Day.") +
+#   facet_wrap(~continent,ncol=1)
 ```
 
-#### Plot of Loess Fitted curve by Continent
+#### Plot of Loess Fitted curve by continent
 
 ```{r}
-ggplot(continent_cases) +
-  geom_smooth(aes(x=Reported,y=Cases,col=Continent),span=0.1) +
-  labs(title="Loess Fitted Curve(Cases) by  Continent and Day.")
+ggplot(continent_new_cases) +
+  geom_smooth(aes(x=date,y=new_cases,col=continent),span=0.1) +
+  labs(title="Loess Fitted Curve(new_cases) by  continent and Day.")
   
 
-ggplot(continent_deaths) +
-  geom_smooth(aes(x=Reported,y=Deaths,col=Continent),span=0.1) +
-  labs(title="Loess Fitted Curve(Deaths) by  Continent and Day.") 
+ggplot(continent_new_deaths) +
+  geom_smooth(aes(x=date,y=new_deaths,col=continent),span=0.1) +
+  labs(title="Loess Fitted Curve(new_deaths) by  continent and Day.") 
   
 ```
 
